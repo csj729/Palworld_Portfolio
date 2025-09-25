@@ -12,7 +12,8 @@ enum class EItemType : uint8
     Consumable UMETA(DisplayName = "Consumable"),
     Material   UMETA(DisplayName = "Material"),
     Equipment  UMETA(DisplayName = "Equipment"),
-    Misc       UMETA(DisplayName = "Misc")
+    Misc       UMETA(DisplayName = "Misc"),
+    Pal        UMETA(DisplayName = "Pal")
 };
 
 UCLASS()

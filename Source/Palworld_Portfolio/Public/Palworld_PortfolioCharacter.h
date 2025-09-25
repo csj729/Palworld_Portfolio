@@ -28,10 +28,6 @@ class APalworld_PortfolioCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UInventoryComponent* Inven;
 	
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -67,6 +63,12 @@ class APalworld_PortfolioCharacter : public ACharacter
 public:
 	APalworld_PortfolioCharacter();
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UInventoryComponent* ItemInven;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UInventoryComponent* PalInven;
+
 	// 입력 바인딩 필요. 건설 함수
 	UFUNCTION(BlueprintCallable, Category = "Building")
 	void OnToggleBuildMode();

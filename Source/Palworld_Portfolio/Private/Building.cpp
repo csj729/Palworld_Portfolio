@@ -13,6 +13,7 @@ ABuilding::ABuilding()
 
 	// Static Mesh 컴포넌트를 생성하고 루트 컴포넌트로 설정합니다.
 	BuildingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BuildingMesh"));
+    BuildingMesh->SetCollisionObjectType(ECC_Building);
 	RootComponent = BuildingMesh;
 }
 

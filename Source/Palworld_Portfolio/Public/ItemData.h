@@ -16,6 +16,9 @@ struct FItemData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     int32 Quantity;
 
+    // <<-- ���� ���� �����͸� ������ ���� �߰� -->>
+    // �� ������ ���� ���� �ǹ̰� �ִ� �������Դϴ�.
+    
     FItemData()
         : ItemAsset(nullptr), Quantity(0)
     {

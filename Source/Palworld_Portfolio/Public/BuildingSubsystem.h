@@ -44,8 +44,20 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Building")
     bool IsDismantlingMode() const { return bIsDismantlingMode; }
 
+    /** Preview 메시를 특정 회전값만큼 회전시킴 (Mouse Wheel Input용) */
+    UFUNCTION(BlueprintCallable, Category = "Building")
+    void AddPreviewRotation(float AxisValue);
+
     // === Preview 업데이트 ===
     void UpdatePreview();
+
+    // === DismantleMode 업데이트 ===
+    void UpdateDismantleHighlight();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Preview")
+    float PreviewYaw = 0.f; // 현재 회전값
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Preview")
+    float PreviewRotationSpeed = 15.f; // 마우스 휠 1틱당 회전 각도
 
     /** 매 프레임 실행할 Tick */
     virtual void Tick(float DeltaTime) override;
@@ -67,6 +79,8 @@ private:
     UPROPERTY()
     bool bIsDismantlingMode = false;
 
+    UPROPERTY()
+    bool bCanBuild = true;
     // Preview용
     UPROPERTY()
     ABuilding* PreviewBuilding = nullptr;
@@ -77,4 +91,9 @@ private:
     // Preview Material Instance들
     UPROPERTY()
     TArray<UMaterialInstanceDynamic*> PreviewMIDs;
+
+    UPROPERTY()
+    ABuilding* HighlightedBuilding = nullptr;
+
+    TMap<ABuilding*, TArray<UMaterialInterface*>> OriginalMaterials;
 };

@@ -9,6 +9,7 @@
 #include "Building.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
+#include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 
 void UBuildingSubsystem::BeginBuilding(UBuildingDataAsset* BuildingDataAsset)
@@ -35,7 +36,8 @@ void UBuildingSubsystem::BeginBuilding(UBuildingDataAsset* BuildingDataAsset)
     // PreviewMaterial 1회 로드
     if (!PreviewMaterial)
     {
-        PreviewMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Build/M_BuildingPreview.M_BuildingPreview"));
+        UE_LOG(LogTemp, Warning, TEXT("PreviewMat Load"));
+        PreviewMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Build/Material/M_BuildingPreview.M_BuildingPreview"));
     }
 
     // 프리뷰 Actor 생성
@@ -68,7 +70,6 @@ void UBuildingSubsystem::BeginBuilding(UBuildingDataAsset* BuildingDataAsset)
                 {
                     MeshComp->SetMaterial(i, MID);
                     PreviewMIDs.Add(MID); // Tick에서 색상/투명도 업데이트용
-                    UE_LOG(LogTemp, Warning, TEXT("MeshNum"));
                 }
             }
             MeshComp->SetCastShadow(false);
@@ -91,34 +92,89 @@ void UBuildingSubsystem::UpdatePreview()
     FVector PlayerLocation = PlayerPawn->GetActorLocation();
     FVector Forward = PlayerPawn->GetActorForwardVector();
 
-    // 메쉬 크기로 오프셋 계산
+    // 1. 플레이어 앞 위치 계산 (기존 코드)
     ABuilding* DefaultBuilding = CurrentBuildingData->BuildingClass->GetDefaultObject<ABuilding>();
     UStaticMeshComponent* MeshComp = DefaultBuilding->FindComponentByClass<UStaticMeshComponent>();
     float ForwardSize = 100.f;
-    FVector BoxExtent(50.f);
     if (MeshComp && MeshComp->GetStaticMesh())
     {
-        BoxExtent = MeshComp->GetStaticMesh()->GetBounds().BoxExtent;
-        ForwardSize = BoxExtent.X * 2.0f + 50.0f;
+        ForwardSize = MeshComp->GetStaticMesh()->GetBounds().BoxExtent.X * 2.f + 50.f;
+    }
+    FVector Location = PlayerLocation + Forward * ForwardSize;
+
+    // 2. 지면 스냅 (라인트레이스)
+    FVector TraceStart = Location;
+    FVector TraceEnd = Location - FVector(0, 0, 1000.f);
+
+    FHitResult HitResult;
+    FCollisionQueryParams TraceParams;
+    TraceParams.bTraceComplex = true;
+    TraceParams.AddIgnoredActor(PlayerPawn);
+    TraceParams.AddIgnoredActor(PreviewBuilding);
+
+    // 건물 무시
+    for (TActorIterator<ABuilding> It(GetWorld()); It; ++It)
+    {
+        ABuilding* Building = *It;
+        if (Building && Building != PreviewBuilding)
+        {
+            TraceParams.AddIgnoredActor(Building);
+        }
     }
 
-    FVector Location = PlayerLocation + Forward * ForwardSize;
+    if (World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_WorldStatic, TraceParams))
+    {
+        Location = HitResult.Location;
+    }
+
+    // 3. Preview 위치 적용
     PreviewBuilding->SetActorLocation(Location);
 
-    // 설치 가능 여부 체크
-    bool bCanPlace = !World->OverlapAnyTestByChannel(Location, FQuat::Identity, ECC_WorldStatic,
-        FCollisionShape::MakeBox(BoxExtent));
+    // 4. Overlap 검사 준비
+    FCollisionObjectQueryParams ObjectParams;
+    ObjectParams.AddObjectTypesToQuery(ECC_Building); // 설치된 건물
 
-    // Dynamic Material Instance 색상/투명도 업데이트
-    FLinearColor Color = bCanPlace ? FLinearColor::White : FLinearColor::Red;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(PreviewBuilding); // Preview 자신 무시
+
+    // 5. 메시 단위 Overlap 체크
+    bool bOverlap = false;
+    TArray<UStaticMeshComponent*> MeshComponents;
+    PreviewBuilding->GetComponents<UStaticMeshComponent>(MeshComponents);
+
+    for (UStaticMeshComponent* Comp : MeshComponents)
+    {
+        if (!Comp || !Comp->GetStaticMesh()) continue;
+
+        FTransform CompTransform = Comp->GetComponentTransform();
+        FVector BoxExtent = Comp->GetStaticMesh()->GetBounds().BoxExtent;
+        FVector BoxCenter = CompTransform.TransformPosition(Comp->GetStaticMesh()->GetBounds().Origin);
+
+        if (World->OverlapAnyTestByObjectType(
+            BoxCenter,
+            CompTransform.GetRotation(),
+            ObjectParams,
+            FCollisionShape::MakeBox(BoxExtent),
+            Params))
+        {
+            bOverlap = true;
+            UE_LOG(LogTemp, Warning, TEXT("Overlap"));
+            break; // 하나라도 겹치면 설치 불가
+        }
+    }
+
+    bCanBuild = !bOverlap;
+
+    // 6. Dynamic Material Instance 색상/투명도 업데이트
+    FLinearColor Color = bCanBuild ? FLinearColor::White : FLinearColor::Red;
     float Opacity = 0.5f;
 
     for (UMaterialInstanceDynamic* MID : PreviewMIDs)
     {
         if (MID)
         {
-            MID->SetVectorParameterValue(FName("Color"), Color);
-            MID->SetScalarParameterValue(FName("Opacity"), Opacity);
+            MID->SetVectorParameterValue(FName("PreviewColor"), Color);
+            MID->SetScalarParameterValue(FName("PreviewOpacity"), Opacity);
         }
     }
 }
@@ -134,34 +190,133 @@ void UBuildingSubsystem::FinishBuilding(EClickType ClickType)
     FTransform SpawnTransform = PreviewBuilding->GetActorTransform();
 
     // 실제 건물 스폰
-    ABuilding* NewBuilding = World->SpawnActor<ABuilding>(
-        CurrentBuildingData->BuildingClass,
-        SpawnTransform
-    );
-
-    if (NewBuilding)
-        UE_LOG(LogTemp, Log, TEXT("Building placed: %s"), *NewBuilding->GetName());
-
-
-
-    // LeftClick → 종료, RightClick → 계속 설치 가능
-    if (ClickType == EClickType::LeftClick)
+    if(bCanBuild)
     {
-        // 프리뷰 제거
-        PreviewBuilding->Destroy();
-        PreviewBuilding = nullptr;
+        ABuilding* NewBuilding = World->SpawnActor<ABuilding>(
+            CurrentBuildingData->BuildingClass,
+            SpawnTransform
+        );
+        NewBuilding->BuildingData = CurrentBuildingData;
 
-        bIsBuildingMode = false;
-        bIsDismantlingMode = false;
-        CurrentBuildingData = nullptr;
+        if (NewBuilding)
+        {
+            UE_LOG(LogTemp, Log, TEXT("Building placed: %s"), *NewBuilding->GetName());
+            NewBuilding->OnBuildComplete();
+        }
+
+        // LeftClick → 종료, RightClick → 계속 설치 가능
+        if (ClickType == EClickType::LeftClick)
+        {
+            // 프리뷰 제거
+            PreviewBuilding->Destroy();
+            PreviewBuilding = nullptr;
+
+            bIsBuildingMode = false;
+            bIsDismantlingMode = false;
+            CurrentBuildingData = nullptr;
+        }
     }
+    
 }
 
 void UBuildingSubsystem::BeginDismantling()
 {
+    if (PreviewBuilding)
+    {
+        PreviewBuilding->Destroy();
+        PreviewBuilding = nullptr;
+    }
+
+    PreviewMIDs.Empty();
     bIsDismantlingMode = true;
     bIsBuildingMode = false;
     UE_LOG(LogTemp, Warning, TEXT("Destruction mode on"));
+}
+
+// BuildingSubsystem.cpp
+void UBuildingSubsystem::UpdateDismantleHighlight()
+{
+    if (!bIsDismantlingMode) return;
+
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+    if (!PC) return;
+
+    APawn* PlayerPawn = PC->GetPawn();
+    if (!PlayerPawn) return;
+
+    FVector Start = PlayerPawn->GetActorLocation();
+    FVector Forward = PlayerPawn->GetActorForwardVector();
+    FVector End = Start + Forward * 500.f;
+
+    FHitResult HitResult;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(PlayerPawn);
+
+    ABuilding* HitBuilding = nullptr;
+    if (World->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
+    {
+        HitBuilding = Cast<ABuilding>(HitResult.GetActor());
+    }
+
+    // 이전 하이라이트 초기화
+    if (HighlightedBuilding && HighlightedBuilding != HitBuilding)
+    {
+        if (OriginalMaterials.Contains(HighlightedBuilding))
+        {
+            TArray<UStaticMeshComponent*> Comps;
+            HighlightedBuilding->GetComponents<UStaticMeshComponent>(Comps);
+
+            for (int32 i = 0; i < Comps.Num(); i++)
+            {
+                UStaticMeshComponent* Comp = Comps[i];
+                TArray<UMaterialInterface*>& Mats = OriginalMaterials[HighlightedBuilding];
+                for (int32 j = 0; j < Mats.Num(); j++)
+                {
+                    Comp->SetMaterial(j, Mats[j]);
+                }
+            }
+            OriginalMaterials.Remove(HighlightedBuilding);
+        }
+        HighlightedBuilding = nullptr;
+    }
+
+    // 새로운 하이라이트 적용
+    if (HitBuilding && HighlightedBuilding != HitBuilding)
+    {
+        TArray<UStaticMeshComponent*> Comps;
+        HitBuilding->GetComponents<UStaticMeshComponent>(Comps);
+
+        // 원본 Material 저장
+        TArray<UMaterialInterface*> Mats;
+        for (UStaticMeshComponent* Comp : Comps)
+        {
+            for (int32 j = 0; j < Comp->GetNumMaterials(); j++)
+            {
+                Mats.Add(Comp->GetMaterial(j));
+            }
+        }
+        OriginalMaterials.Add(HitBuilding, Mats);
+
+        // MID 적용
+        for (UStaticMeshComponent* Comp : Comps)
+        {
+            for (int32 i = 0; i < Comp->GetNumMaterials(); i++)
+            {
+                UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(PreviewMaterial, this);
+                if (MID)
+                {
+                    MID->SetVectorParameterValue(FName("PreviewColor"), FLinearColor::Blue);
+                    MID->SetScalarParameterValue(FName("PreviewOpacity"), 0.5f);
+                    Comp->SetMaterial(i, MID);
+                }
+            }
+        }
+
+        HighlightedBuilding = HitBuilding;
+    }
 }
 
 void UBuildingSubsystem::DismantleAt(EClickType ClickType)
@@ -217,6 +372,7 @@ void UBuildingSubsystem::EndBuildingMode()
         PreviewBuilding = nullptr;
     }
 
+    PreviewMIDs.Empty();
     bIsBuildingMode = false;
     bIsDismantlingMode = false;
     CurrentBuildingData = nullptr;
@@ -229,4 +385,26 @@ void UBuildingSubsystem::Tick(float DeltaTime)
         // 매 프레임 프리뷰 업데이트
         UpdatePreview();
     }
+
+    if (bIsDismantlingMode)
+    {
+        UpdateDismantleHighlight();
+    }
+}
+
+void UBuildingSubsystem::AddPreviewRotation(float AxisValue)
+{
+    if (!PreviewBuilding || FMath::IsNearlyZero(AxisValue))
+        return;
+
+    // AxisValue는 Mouse Wheel 입력 ±1 등, PreviewRotationSpeed와 곱해서 회전
+    PreviewYaw += AxisValue * PreviewRotationSpeed;
+
+    // 0~360 범위로 제한
+    if (PreviewYaw > 360.f) PreviewYaw -= 360.f;
+    if (PreviewYaw < 0.f) PreviewYaw += 360.f;
+
+    FRotator NewRot = PreviewBuilding->GetActorRotation();
+    NewRot.Yaw = PreviewYaw;
+    PreviewBuilding->SetActorRotation(NewRot);
 }

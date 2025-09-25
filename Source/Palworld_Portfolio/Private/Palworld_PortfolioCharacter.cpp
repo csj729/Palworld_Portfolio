@@ -54,7 +54,8 @@ APalworld_PortfolioCharacter::APalworld_PortfolioCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// 인벤토리 추가
-	Inven = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
+	ItemInven = CreateDefaultSubobject<UInventoryComponent>(TEXT("ItemInventory"));
+	PalInven = CreateDefaultSubobject<UInventoryComponent>(TEXT("PalInventory"));
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)

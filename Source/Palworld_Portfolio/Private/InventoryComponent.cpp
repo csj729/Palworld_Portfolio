@@ -98,3 +98,18 @@ int32 UInventoryComponent::GetItemCount(UItemDataAsset* ItemAsset) const
     }
     return Count;
 }
+
+bool UInventoryComponent::AddPal(APal* NewPal)
+{
+    if (NewPal)
+    {
+        StoredPals.Add(NewPal);
+        return true;
+    }
+    return false;
+}
+
+bool UInventoryComponent::RemovePal(APal* PalToRemove)
+{
+    return StoredPals.Remove(PalToRemove) > 0;
+}

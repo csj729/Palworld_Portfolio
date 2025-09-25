@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Palworld_PortfolioCharacter.h"
-#include "Building.h"
+#include "Pal.h"
 #include "PlayerSystem.generated.h"
 
 // ±‚∫ª Ω∫≈» ±∏¡∂√º
@@ -150,6 +150,19 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Tech")
     bool UnlockTech(const FTechData& Tech);
+
+    // === ∆” º“»Ø ===
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
+    int32 Palindex = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pal")
+    bool bIsSummoned = false;
+
+    UFUNCTION(BlueprintCallable, Category = "Pal")
+    APal* SummonPal(int32 Index);
+
+    UFUNCTION(BlueprintCallable, Category = "Pal")
+    void UnsummonPal();
 
 
 };

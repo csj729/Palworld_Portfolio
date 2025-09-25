@@ -11,6 +11,8 @@
 #include "BuildingDataAsset.h" // UBuildingDataAsset 헤더를 포함합니다.
 #include "Building.generated.h"
 
+#define ECC_Building ECC_GameTraceChannel1
+
 UCLASS()
 class PALWORLD_PORTFOLIO_API ABuilding : public AActor
 {
