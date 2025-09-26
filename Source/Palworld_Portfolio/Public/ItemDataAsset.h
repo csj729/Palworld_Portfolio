@@ -17,7 +17,7 @@ enum class EItemType : uint8
     Egg        UMETA(DisplayName = "Egg")
 };
 
-UCLASS()
+UCLASS(BlueprintType)
 class PALWORLD_PORTFOLIO_API UItemDataAsset : public UDataAsset
 {
     GENERATED_BODY()
