@@ -162,7 +162,7 @@ public:
     APal* SummonPal(int32 Index);
 
     UFUNCTION(BlueprintCallable, Category = "Pal")
-    void UnsummonPal();
+    void UnsummonPal(APal* SummonedPal);
 
 
 };

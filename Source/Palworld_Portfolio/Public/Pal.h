@@ -193,7 +193,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pal|State")
     bool bIsBred;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Pal|State")
+    UPROPERTY(VisibleAnywhere, BlueprintReadwrite, Category = "Pal|State")
     bool bIsCaptured;
 
     // ====== 기본 스탯 ======
@@ -242,7 +242,7 @@ public:
 
     // 소속
     ACharacter* OwnerCharacter; // 어느 캐릭터의 것인지
-    //ABaseBuilding* OwnerBase; // 어떤 기지에 속해있는지
+    class ABuilding* OwnerBase; // 어떤 기지에 속해있는지
 
     // 계산된 스탯 (Traits 적용)
     UFUNCTION(BlueprintCallable)

@@ -83,45 +83,61 @@ bool APlayerSystem::UnlockTech(const FTechData& Tech)
 
 APal* APlayerSystem::SummonPal(int32 Index)
 {
-    if (bIsSummoned) return nullptr; // 이미 소환되어 있으면 중지
-    if (!PalInven || !PalInven->StoredPals.IsValidIndex(Index)) return nullptr;
+    if (bIsSummoned)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SummonPal blocked: already summoned"));
+        return nullptr; // 이미 소환 중이면 중지
+    }
+    if (!PalInven || !PalInven->StoredPals.IsValidIndex(Index))
+        return nullptr;
 
     APal* PalToSummon = PalInven->StoredPals[Index];
     if (!PalToSummon) return nullptr;
 
-    UWorld* World = GetWorld();
-    if (!World) return nullptr;
+    // 소환 로그
+    UE_LOG(LogTemp, Warning, TEXT("Summoned Pal at Index %d : %s"), Index, *PalToSummon->GetName());
 
-    FActorSpawnParameters SpawnParams;
-    SpawnParams.Owner = this;
-    SpawnParams.Instigator = this;
-
+    // 위치/회전 갱신
     FVector SpawnLocation = GetActorLocation() + GetActorForwardVector() * 200.f;
     FRotator SpawnRotation = GetActorRotation();
+    PalToSummon->SetActorLocation(SpawnLocation);
+    PalToSummon->SetActorRotation(SpawnRotation);
 
-    APal* SpawnedPal = World->SpawnActor<APal>(PalToSummon->GetClass(), SpawnLocation, SpawnRotation, SpawnParams);
-    if (SpawnedPal)
-    {
-        SpawnedPal->OwnerCharacter = this;
-        Palindex = Index;
-        PalInven->StoredPals[Index] = SpawnedPal; // 인벤토리 참조 업데이트
-        bIsSummoned = true;
-    }
+    // 숨김 해제 + 활성화
+    PalToSummon->SetActorHiddenInGame(false);
+    PalToSummon->SetActorEnableCollision(true);
+    PalToSummon->SetActorTickEnabled(true);
 
-    return SpawnedPal;
+    // 소유자 갱신
+    PalToSummon->OwnerCharacter = this;
+
+    Palindex = Index;
+    bIsSummoned = true;
+
+    return PalToSummon;
 }
 
-void APlayerSystem::UnsummonPal()
+void APlayerSystem::UnsummonPal(APal* SummonedPal)
 {
-    if (!bIsSummoned || !PalInven) return;
+    if (!bIsSummoned || !PalInven || !PalInven->StoredPals.IsValidIndex(Palindex))
+        return;
 
-    if (!PalInven->StoredPals.IsValidIndex(Palindex)) return;
-
-    APal* SpawnedPal = PalInven->StoredPals[Palindex];
-    if (SpawnedPal && SpawnedPal->GetWorld() == GetWorld())
+    APal* PalToHide = SummonedPal;
+    if (PalToHide)
     {
-        SpawnedPal->Destroy();
+        // 로그
+        UE_LOG(LogTemp, Warning, TEXT("Unsummoned Pal at Index %d : %s"), Palindex, *PalToHide->GetName());
+
+        // 비활성화 + 숨김 처리
+        PalToHide->SetActorHiddenInGame(true);
+        PalToHide->SetActorEnableCollision(false);
+        PalToHide->SetActorTickEnabled(false);
+
+        // 안전하게 "저장 위치"로 이동시켜둠
+        static const FVector StorageLocation(0.f, 0.f, -10000.f);
+        PalToHide->SetActorLocation(StorageLocation);
     }
 
+    // 상태 초기화
     bIsSummoned = false;
 }

@@ -13,7 +13,8 @@ enum class EItemType : uint8
     Material   UMETA(DisplayName = "Material"),
     Equipment  UMETA(DisplayName = "Equipment"),
     Misc       UMETA(DisplayName = "Misc"),
-    Pal        UMETA(DisplayName = "Pal")
+    Pal        UMETA(DisplayName = "Pal"),
+    Egg        UMETA(DisplayName = "Egg")
 };
 
 UCLASS()
@@ -42,4 +43,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item")
     float Weight = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+    TSubclassOf<AActor> ItemBlueprint;
 };

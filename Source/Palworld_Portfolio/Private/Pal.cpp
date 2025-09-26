@@ -58,7 +58,7 @@ void APal::BeginPlay()
 	}
 
 	// 자연 스폰일 경우에만 실행
-	if (!bIsBred && !bIsCaptured)
+	if (!bIsBred)
 	{
 		// ======NEW! 자연 스폰 Pal 초기화 로직======
 
