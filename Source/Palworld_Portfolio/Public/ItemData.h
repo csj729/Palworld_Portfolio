@@ -15,7 +15,7 @@ struct FItemData
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     int32 Quantity;
-    
+
     FItemData()
         : ItemAsset(nullptr), Quantity(0)
     {
@@ -25,4 +25,6 @@ struct FItemData
         : ItemAsset(InItem), Quantity(InQuantity)
     {
     }
+
+    bool IsEmpty() const { return ItemAsset == nullptr || Quantity <= 0; }
 };

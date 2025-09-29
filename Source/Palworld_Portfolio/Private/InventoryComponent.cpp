@@ -1,87 +1,81 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// InventoryComponent.cpp
 
 #include "InventoryComponent.h"
 
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
 {
-    // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-    // off to improve performance if you don't need them.
-    PrimaryComponentTick.bCanEverTick = true;
-
-    // ...
+    PrimaryComponentTick.bCanEverTick = false; // 매 프레임 틱 불필요
+    Slots.SetNum(Capacity); // 고정 슬롯 개수 확보
 }
-
 
 // Called when the game starts
 void UInventoryComponent::BeginPlay()
 {
-    Super::BeginPlay();
-
-    // ...
 
 }
+
+// ================== 아이템 관련 ==================
 
 bool UInventoryComponent::AddItem(UItemDataAsset* ItemAsset, int32 Quantity)
 {
     if (!ItemAsset || Quantity <= 0) return false;
 
-    // 기존 슬롯 찾기
-    for (FItemData& Slot : Items)
-    {
-        if (Slot.ItemAsset == ItemAsset)
-        {
-            int32 MaxStack = ItemAsset->MaxStackSize;
-            int32 SpaceLeft = MaxStack - Slot.Quantity;
+    int32 MaxStack = ItemAsset->MaxStackSize;
 
-            if (SpaceLeft > 0)
-            {
-                int32 ToAdd = FMath::Min(SpaceLeft, Quantity);
-                Slot.Quantity += ToAdd;
-                Quantity -= ToAdd;
-            }
+    // 1. 같은 아이템이 들어있는 슬롯에 우선 추가
+    for (FItemData& Slot : Slots)
+    {
+        if (Slot.ItemAsset == ItemAsset && Slot.Quantity < MaxStack)
+        {
+            int32 SpaceLeft = MaxStack - Slot.Quantity;
+            int32 ToAdd = FMath::Min(SpaceLeft, Quantity);
+
+            Slot.Quantity += ToAdd;
+            Quantity -= ToAdd;
+
+            if (Quantity <= 0) return true;
         }
     }
 
-    // 남은 수량이 있으면 새 슬롯 추가
-    while (Quantity > 0 && Items.Num() < Capacity)
+    // 2. 빈 슬롯에 새로 추가
+    for (FItemData& Slot : Slots)
     {
-        int32 ToAdd = FMath::Min(ItemAsset->MaxStackSize, Quantity);
-        Items.Add(FItemData(ItemAsset, ToAdd));
-        Quantity -= ToAdd;
+        if (Slot.ItemAsset == nullptr)
+        {
+            int32 ToAdd = FMath::Min(MaxStack, Quantity);
+
+            Slot.ItemAsset = ItemAsset;
+            Slot.Quantity = ToAdd;
+
+            Quantity -= ToAdd;
+            if (Quantity <= 0) return true;
+        }
     }
 
-    return Quantity == 0; // 전부 추가됐으면 true
+    // 다 추가 못했으면 실패
+    return false;
 }
 
-bool UInventoryComponent::RemoveItem(UItemDataAsset* ItemAsset, int32 Quantity)
+bool UInventoryComponent::RemoveItem(int32 SlotIndex, int32 Quantity)
 {
-    if (!ItemAsset || Quantity <= 0) return false;
+    if (!Slots.IsValidIndex(SlotIndex) || Quantity <= 0) return false;
 
-    for (int32 i = 0; i < Items.Num(); i++)
+    FItemData& Slot = Slots[SlotIndex];
+    if (!Slot.ItemAsset || Slot.Quantity <= 0) return false;
+
+    if (Slot.Quantity > Quantity)
     {
-        if (Items[i].ItemAsset == ItemAsset)
-        {
-            if (Items[i].Quantity > Quantity)
-            {
-                Items[i].Quantity -= Quantity;
-                return true;
-            }
-            else if (Items[i].Quantity == Quantity)
-            {
-                Items.RemoveAt(i);
-                return true;
-            }
-            else
-            {
-                Quantity -= Items[i].Quantity;
-                Items.RemoveAt(i);
-                i--;
-            }
-        }
+        Slot.Quantity -= Quantity;
+    }
+    else
+    {
+        // 다 빼면 슬롯 초기화
+        Slot.ItemAsset = nullptr;
+        Slot.Quantity = 0;
     }
 
-    return Quantity == 0;
+    return true;
 }
 
 int32 UInventoryComponent::GetItemCount(UItemDataAsset* ItemAsset) const
@@ -89,7 +83,7 @@ int32 UInventoryComponent::GetItemCount(UItemDataAsset* ItemAsset) const
     if (!ItemAsset) return 0;
 
     int32 Count = 0;
-    for (const FItemData& Slot : Items)
+    for (const FItemData& Slot : Slots)
     {
         if (Slot.ItemAsset == ItemAsset)
         {
@@ -98,6 +92,14 @@ int32 UInventoryComponent::GetItemCount(UItemDataAsset* ItemAsset) const
     }
     return Count;
 }
+
+const FItemData& UInventoryComponent::GetSlot(int32 SlotIndex) const
+{
+    check(Slots.IsValidIndex(SlotIndex)); // 잘못된 인덱스면 Crash → 디버그에 도움
+    return Slots[SlotIndex];
+}
+
+// ================== Pal 관련 ==================
 
 bool UInventoryComponent::AddPal(APal* NewPal)
 {
