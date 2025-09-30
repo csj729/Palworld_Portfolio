@@ -9,6 +9,7 @@
 UENUM(BlueprintType)
 enum class EItemType : uint8
 {
+    None       UMETA(DisplayName = "None"),
     Consumable UMETA(DisplayName = "Consumable"),
     Material   UMETA(DisplayName = "Material"),
     Equipment  UMETA(DisplayName = "Equipment"),
@@ -37,7 +38,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     UTexture2D* Icon;
-
+        
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     int32 MaxStackSize = 99;
 

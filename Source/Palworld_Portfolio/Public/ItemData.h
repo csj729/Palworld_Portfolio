@@ -14,8 +14,8 @@ struct FItemData
     UItemDataAsset* ItemAsset;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-    int32 Quantity;
-
+    int32 Quantity; 
+    
     FItemData()
         : ItemAsset(nullptr), Quantity(0)
     {

@@ -63,10 +63,10 @@ class APalworld_PortfolioCharacter : public ACharacter
 public:
 	APalworld_PortfolioCharacter();
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	UInventoryComponent* ItemInven;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	UInventoryComponent* PalInven;
 
 	// 입력 바인딩 필요. 건설 함수
