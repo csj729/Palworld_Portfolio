@@ -202,6 +202,8 @@ APal* APal::Breed(UObject* WorldContextObject, APal* ParentA, APal* ParentB, FVe
 	APal* Child = World->SpawnActor<APal>(ParentA->GetClass(), SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 	if (!Child) return nullptr;
 
+	Child->SetActorScale3D(FVector(0.7f, 0.7f, 0.7f));
+
 	Child->bIsBred = true;
 	Child->Level = 1;
 
@@ -396,6 +398,13 @@ void APal::CheckLevelUp()
 void APal::LevelUp()
 {
 	Level++;
+
+	// 만약 이 팰이 번식으로 태어났고, 레벨이 5 이상이 되면
+	if (bIsBred && Level >= 5)
+	{
+		// 액터의 크기를 원래 크기(100%)로 되돌립니다.
+		SetActorScale3D(FVector(1.0f, 1.0f, 1.0f));
+	}
 
 	float HPIncrease = 1.0f;
 	float AttackIncrease = 2.0f;

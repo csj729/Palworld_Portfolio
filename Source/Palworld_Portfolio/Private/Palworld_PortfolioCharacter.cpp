@@ -54,8 +54,8 @@ APalworld_PortfolioCharacter::APalworld_PortfolioCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// 인벤토리 추가
-	ItemInven = CreateDefaultSubobject<UInventoryComponent>(TEXT("ItemInven"));
-	PalInven = CreateDefaultSubobject<UInventoryComponent>(TEXT("PalInven"));
+	ItemInven = CreateDefaultSubobject<UInventoryComponent>(TEXT("ItemInventory"));
+	PalInven = CreateDefaultSubobject<UInventoryComponent>(TEXT("PalInventory"));
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -116,7 +116,7 @@ void APalworld_PortfolioCharacter::OnToggleBuildMode()
 			else
 			{
 				// GameInstance의 TMap에서 원하는 데이터를 찾습니다.
-				if (UBuildingDataAsset** FoundData = MyGameInstance->AllBuildingData.Find(FName("TestBuilding")))
+				if (UBuildingDataAsset** FoundData = MyGameInstance->AllBuildingData.Find(FName("BreedingFarm")))
 				{
 					UE_LOG(LogTemp, Warning, TEXT("Enter Test"));
 					BuildingSubsystem->BeginBuilding(*FoundData);

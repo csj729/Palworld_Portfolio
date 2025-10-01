@@ -9,7 +9,6 @@
 UENUM(BlueprintType)
 enum class EItemType : uint8
 {
-    None       UMETA(DisplayName = "None"),
     Consumable UMETA(DisplayName = "Consumable"),
     Material   UMETA(DisplayName = "Material"),
     Equipment  UMETA(DisplayName = "Equipment"),
@@ -18,7 +17,7 @@ enum class EItemType : uint8
     Egg        UMETA(DisplayName = "Egg")
 };
 
-UCLASS(BlueprintType)
+UCLASS()
 class PALWORLD_PORTFOLIO_API UItemDataAsset : public UDataAsset
 {
     GENERATED_BODY()
@@ -38,7 +37,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     UTexture2D* Icon;
-        
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     int32 MaxStackSize = 99;
 
