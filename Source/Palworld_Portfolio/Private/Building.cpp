@@ -6,15 +6,19 @@
 // Sets default values
 ABuilding::ABuilding()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
-	Inven = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
+    // SceneRoot 생성 및 루트로 설정
+    SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
+    RootComponent = SceneRoot;
 
-	// Static Mesh 컴포넌트를 생성하고 루트 컴포넌트로 설정합니다.
-	BuildingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BuildingMesh"));
+    // Static Mesh 컴포넌트 생성 후 SceneRoot에 Attach
+    BuildingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BuildingMesh"));
+    BuildingMesh->SetupAttachment(SceneRoot);
     BuildingMesh->SetCollisionObjectType(ECC_Building);
-	RootComponent = BuildingMesh;
+
+    // Inventory 컴포넌트
+    Inven = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
 }
 
 // Called when the game starts or when spawned

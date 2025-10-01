@@ -57,7 +57,7 @@ bool UInventoryComponent::AddItem(UItemDataAsset* ItemAsset, int32 Quantity)
     return false;
 }
 
-bool UInventoryComponent::RemoveItem(int32 SlotIndex, int32 Quantity)
+bool UInventoryComponent::RemoveItemBySlot(int32 SlotIndex, int32 Quantity)
 {
     if (!Slots.IsValidIndex(SlotIndex) || Quantity <= 0) return false;
 
@@ -76,6 +76,36 @@ bool UInventoryComponent::RemoveItem(int32 SlotIndex, int32 Quantity)
     }
 
     return true;
+}
+
+bool UInventoryComponent::RemoveItemByAsset(UItemDataAsset* ItemAsset, int32 Quantity)
+{
+    if (!ItemAsset || Quantity <= 0) return false;
+
+    for (int32 i = 0; i < Slots.Num(); i++)
+    {
+        if (Slots[i].ItemAsset == ItemAsset)
+        {
+            if (Slots[i].Quantity > Quantity)
+            {
+                Slots[i].Quantity -= Quantity;
+                return true;
+            }
+            else if (Slots[i].Quantity == Quantity)
+            {
+                Slots.RemoveAt(i);
+                return true;
+            }
+            else
+            {
+                Quantity -= Slots[i].Quantity;
+                Slots.RemoveAt(i);
+                i--;
+            }
+        }
+    }
+
+    return Quantity == 0;
 }
 
 int32 UInventoryComponent::GetItemCount(UItemDataAsset* ItemAsset) const
@@ -97,6 +127,48 @@ const FItemData& UInventoryComponent::GetSlot(int32 SlotIndex) const
 {
     check(Slots.IsValidIndex(SlotIndex)); // 잘못된 인덱스면 Crash → 디버그에 도움
     return Slots[SlotIndex];
+}
+
+bool UInventoryComponent::SwapItems(int32 FirstIndex, int32 SecondIndex)
+{
+    // 인덱스 유효성 체크
+    if (!Slots.IsValidIndex(FirstIndex) || !Slots.IsValidIndex(SecondIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SwapItems: Invalid indices (%d, %d)"), FirstIndex, SecondIndex);
+        return false;
+    }
+
+    // 같은 슬롯이면 교환할 필요 없음
+    if (FirstIndex == SecondIndex)
+    {
+        return false;
+    }
+
+    // 두 슬롯 교환
+    Slots.Swap(FirstIndex, SecondIndex);
+
+    return true;
+}
+
+bool UInventoryComponent::SwapPals(int32 FirstIndex, int32 SecondIndex)
+{
+    // 인덱스 유효성 체크
+    if (!StoredPals.IsValidIndex(FirstIndex) || !StoredPals.IsValidIndex(SecondIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SwapItems: Invalid indices (%d, %d)"), FirstIndex, SecondIndex);
+        return false;
+    }
+
+    // 같은 슬롯이면 교환할 필요 없음
+    if (FirstIndex == SecondIndex)
+    {
+        return false;
+    }
+
+    // 두 슬롯 교환
+    StoredPals.Swap(FirstIndex, SecondIndex);
+
+    return true;
 }
 
 // ================== Pal 관련 ==================

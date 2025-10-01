@@ -24,7 +24,10 @@ public:
     
     /** 인벤토리 갱신 함수 (C++ 호출 → BP UI 업데이트) */
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void RebuildInventory(UInventoryComponent* Inventory);
+    void RebuildItemInventory(UInventoryComponent* Inventory);
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    void RebuildPalInventory(UInventoryComponent* Inventory);
 
 protected:
     /** 열 개수 (디자이너가 BP에서 조정 가능) */

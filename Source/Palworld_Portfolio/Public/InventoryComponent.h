@@ -30,13 +30,17 @@ public:
     TArray<FItemData> Slots;
 
     // ================= 아이템 관련 =================
-    /** 아이템 추가 (빈 슬롯 또는 기존 스택에 추가) */
+    /** 아이템 추가 (빈 슬롯 또는 기존 스택에 추가) */   
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool AddItem(UItemDataAsset* ItemAsset, int32 Quantity);
 
     /** 슬롯 인덱스로 아이템 제거 */
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    bool RemoveItem(int32 SlotIndex, int32 Quantity);
+    bool RemoveItemBySlot(int32 SlotIndex, int32 Quantity);
+
+    /** 아이템 에셋으로 아이템 제거 */
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    bool RemoveItemByAsset(UItemDataAsset* ItemAsset, int32 Quantity);
 
     /** 특정 아이템 전체 개수 확인 */
     UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -50,6 +54,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     const TArray<FItemData>& GetAllSlots() const { return Slots; }
 
+    /** 두 슬롯의 아이템을 교환 */
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    bool SwapItems(int32 FirstIndex, int32 SecondIndex);
+
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    bool SwapPals(int32 FirstIndex, int32 SecondIndex);
     // ================= Pal 관련 =================
     /** Pal 추가 */
     UFUNCTION(BlueprintCallable, Category = "Inventory|Pals")
