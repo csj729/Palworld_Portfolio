@@ -7,6 +7,7 @@
 
 class UImage;
 class UTextBlock;
+class APal;
 
 UCLASS()
 class PALWORLD_PORTFOLIO_API UInventorySlotWidget : public UUserWidget
@@ -24,7 +25,7 @@ public:
 
     /** ΩΩ∑‘ √ ±‚»≠ (¿Œµ¶Ω∫ + ∆Á µ•¿Ã≈Õ) */
     UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category = "Inventory")
-    void InitPalSlot(const FItemData& ItemData);
+    void InitPalSlot(const APal* PalData);
 
     /** C++ø°º≠ ¿Œµ¶Ω∫ º≥¡§øÎ */
     void SetSlotIndex(int32 Index) { SlotIndex = Index; }

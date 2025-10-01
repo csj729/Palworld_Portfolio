@@ -54,10 +54,11 @@ void UInventoryWidget::RebuildPalInventory(UInventoryComponent* Inventory)
         // 인덱스 저장
         SlotWidget->SetSlotIndex(i);
 
-        // 슬롯 위젯에 아이템 데이터 초기화
-        if (Inventory->Slots.IsValidIndex(i))
+        // 슬롯 위젯에 팰 데이터 초기화
+        if (Inventory->StoredPals.IsValidIndex(i))
         {
-            SlotWidget->InitPalSlot(Inventory->Slots[i]); // BPExpose 함수
+            UE_LOG(LogTemp, Warning, TEXT("INININ"));
+            SlotWidget->InitPalSlot(Inventory->StoredPals[i]); // BPExpose 함수
         }
 
         // Grid에 배치
