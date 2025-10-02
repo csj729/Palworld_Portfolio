@@ -16,4 +16,18 @@ public:
     // 이 맵에 모든 건물 데이터 에셋을 채워 넣습니다.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Building Data")
     TMap<FName, UBuildingDataAsset*> AllBuildingData;
+
+    virtual void Init() override;
+
+    UFUNCTION(BlueprintCallable, Category = "Building Data")
+    UBuildingDataAsset* GetBuildingData(FName BuildingID) const;
+
+    // BuildMode에서 선택용 배열
+    UPROPERTY(Transient)
+    TArray<UBuildingDataAsset*> AllBuildingDataArray;
+
+    void GenerateArrayFromMap()
+    {
+        AllBuildingData.GenerateValueArray(AllBuildingDataArray);
+    }
 };

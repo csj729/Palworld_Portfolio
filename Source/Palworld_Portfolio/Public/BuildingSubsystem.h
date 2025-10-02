@@ -22,7 +22,7 @@ class PALWORLD_PORTFOLIO_API UBuildingSubsystem : public UGameInstanceSubsystem,
 public:
     // === 건설 ===
     UFUNCTION(BlueprintCallable, Category = "Building")
-    void BeginBuilding(UBuildingDataAsset* BuildingDataAsset);
+    void BeginBuilding();
 
     UFUNCTION(BlueprintCallable, Category = "Building")
     void FinishBuilding(EClickType ClickType);
@@ -53,6 +53,16 @@ public:
 
     // === DismantleMode 업데이트 ===
     void UpdateDismantleHighlight();
+
+    // BuildMode에서 건물 선택
+    UFUNCTION(BlueprintCallable, Category = "Building")
+    void NextBuilding();
+
+    UFUNCTION(BlueprintCallable, Category = "Building")
+    void PrevBuilding();
+
+    UFUNCTION(BlueprintCallable, Category = "Building")
+    void SetCurrentBuilding(UBuildingDataAsset* NewBuilding);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Preview")
     float PreviewYaw = 0.f; // 현재 회전값
@@ -96,4 +106,11 @@ private:
     ABuilding* HighlightedBuilding = nullptr;
 
     TMap<ABuilding*, TArray<UMaterialInterface*>> OriginalMaterials;
+
+    // 현재 선택된 건물 인덱스 (GameInstance의 TArray 기준)
+    int32 CurrentBuildIndex = 0;
+
+    // BuildMode 토글 시 선택 가능한 건물 배열
+    UPROPERTY()
+    TArray<UBuildingDataAsset*> AvailableBuildings;
 };

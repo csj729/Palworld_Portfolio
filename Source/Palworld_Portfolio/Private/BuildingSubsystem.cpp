@@ -10,23 +10,34 @@
 #include "Materials/MaterialParameterCollection.h"
 #include "Materials/MaterialParameterCollectionInstance.h"
 #include "EngineUtils.h"
+#include "PalWorldGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 
-void UBuildingSubsystem::BeginBuilding(UBuildingDataAsset* BuildingDataAsset)
+void UBuildingSubsystem::BeginBuilding()
 {
-    if (!BuildingDataAsset || !BuildingDataAsset->BuildingClass)
+    if (UPalWorldGameInstance* GI = Cast<UPalWorldGameInstance>(GetOuter()))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Invalid BuildingDataAsset or BuildingClass"));
-        return;
+        GI->AllBuildingData.GenerateValueArray(AvailableBuildings);
+
+        if (AvailableBuildings.Num() > 0)
+        {
+            CurrentBuildIndex = 0;
+            CurrentBuildingData = AvailableBuildings[CurrentBuildIndex];
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("No buildings available in GameInstance!"));
+            return;
+        }
     }
 
-    CurrentBuildingData = BuildingDataAsset;
     bIsBuildingMode = true;
     bIsDismantlingMode = false;
 
     UWorld* World = GetWorld();
     if (!World) return;
 
+    // 기존 Preview 제거
     if (PreviewBuilding)
     {
         PreviewBuilding->Destroy();
@@ -36,7 +47,6 @@ void UBuildingSubsystem::BeginBuilding(UBuildingDataAsset* BuildingDataAsset)
     // PreviewMaterial 1회 로드
     if (!PreviewMaterial)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PreviewMat Load"));
         PreviewMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Build/Material/M_BuildingPreview.M_BuildingPreview"));
     }
 
@@ -51,7 +61,6 @@ void UBuildingSubsystem::BeginBuilding(UBuildingDataAsset* BuildingDataAsset)
 
     if (PreviewBuilding)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PreviewBuilding enter"));
         PreviewBuilding->SetActorEnableCollision(false);
         PreviewBuilding->FinishSpawning(FTransform::Identity);
 
@@ -69,12 +78,14 @@ void UBuildingSubsystem::BeginBuilding(UBuildingDataAsset* BuildingDataAsset)
                 if (MID)
                 {
                     MeshComp->SetMaterial(i, MID);
-                    PreviewMIDs.Add(MID); // Tick에서 색상/투명도 업데이트용
+                    PreviewMIDs.Add(MID);
                 }
             }
             MeshComp->SetCastShadow(false);
         }
     }
+
+    UE_LOG(LogTemp, Warning, TEXT("BuildMode started. Current building: %s"), *CurrentBuildingData->GetName());
 }
 
 void UBuildingSubsystem::UpdatePreview()
@@ -407,4 +418,84 @@ void UBuildingSubsystem::AddPreviewRotation(float AxisValue)
     FRotator NewRot = PreviewBuilding->GetActorRotation();
     NewRot.Yaw = PreviewYaw;
     PreviewBuilding->SetActorRotation(NewRot);
+}
+
+void UBuildingSubsystem::NextBuilding()
+{
+    if (AvailableBuildings.Num() == 0) return;
+
+    CurrentBuildIndex++;
+    if (CurrentBuildIndex >= AvailableBuildings.Num())
+        CurrentBuildIndex = 0; // 순환
+
+    SetCurrentBuilding(AvailableBuildings[CurrentBuildIndex]);
+}
+
+void UBuildingSubsystem::PrevBuilding()
+{
+    if (AvailableBuildings.Num() == 0) return;
+
+    CurrentBuildIndex--;
+    if (CurrentBuildIndex < 0)
+        CurrentBuildIndex = AvailableBuildings.Num() - 1; // 순환
+
+    SetCurrentBuilding(AvailableBuildings[CurrentBuildIndex]);
+}
+
+void UBuildingSubsystem::SetCurrentBuilding(UBuildingDataAsset* NewBuilding)
+{
+    if (!NewBuilding || !bIsBuildingMode) return;
+
+    CurrentBuildingData = NewBuilding;
+
+    // 기존 Preview 제거
+    if (PreviewBuilding)
+    {
+        PreviewBuilding->Destroy();
+        PreviewBuilding = nullptr;
+    }
+
+    // Preview 스폰만 수행 (CurrentBuildingData는 이미 설정됨)
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    if (!PreviewMaterial)
+    {
+        PreviewMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Build/Material/M_BuildingPreview.M_BuildingPreview"));
+    }
+
+    PreviewBuilding = World->SpawnActorDeferred<ABuilding>(
+        CurrentBuildingData->BuildingClass,
+        FTransform::Identity,
+        nullptr,
+        nullptr,
+        ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+    );
+
+    if (PreviewBuilding)
+    {
+        PreviewBuilding->SetActorEnableCollision(false);
+        PreviewBuilding->FinishSpawning(FTransform::Identity);
+
+        PreviewMIDs.Empty();
+        TArray<UStaticMeshComponent*> MeshComps;
+        PreviewBuilding->GetComponents<UStaticMeshComponent>(MeshComps);
+
+        for (UStaticMeshComponent* MeshComp : MeshComps)
+        {
+            int32 NumMats = MeshComp->GetNumMaterials();
+            for (int32 i = 0; i < NumMats; i++)
+            {
+                UMaterialInstanceDynamic* MID = UMaterialInstanceDynamic::Create(PreviewMaterial, this);
+                if (MID)
+                {
+                    MeshComp->SetMaterial(i, MID);
+                    PreviewMIDs.Add(MID);
+                }
+            }
+            MeshComp->SetCastShadow(false);
+        }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Current Building: %s"), *CurrentBuildingData->GetName());
 }

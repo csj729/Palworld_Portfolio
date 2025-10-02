@@ -115,12 +115,7 @@ void APalworld_PortfolioCharacter::OnToggleBuildMode()
 			}
 			else
 			{
-				// GameInstance의 TMap에서 원하는 데이터를 찾습니다.
-				if (UBuildingDataAsset** FoundData = MyGameInstance->AllBuildingData.Find(FName("BreedingFarm")))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Enter Test"));
-					BuildingSubsystem->BeginBuilding(*FoundData);
-				}
+				BuildingSubsystem->BeginBuilding();
 			}
 		}
 	}
