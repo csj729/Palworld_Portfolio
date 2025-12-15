@@ -220,7 +220,7 @@ void APlayerSystem::LevelUp()
 <br>
 <br>
 
-[![GitHub](https://img.shields.io/badge/GitHub-csj729-181717?style=for-the-badge&logo=github)](https://github.com/csj729/Palworld_Portfolio)
+[![GitHub](https://img.shields.io/badge/GitHub-csj729-181717?style=for-the-badge&logo=github)](https://github.com/csj729)
 
 <br>
 
