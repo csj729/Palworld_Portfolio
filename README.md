@@ -26,7 +26,7 @@
 
 ---
 
-### 🏗️ 건축 시스템 (Building System)
+### 🏗️ 건축 시스템
 * **역할:** 플레이어가 월드에 구조물을 배치하고 건설하는 기능을 전담합니다. `GameInstanceSubsystem`으로 구현되어 레벨 이동 간에도 상태를 유지하며 독립적으로 작동합니다.
 * **핵심 기능:** `LineTrace`와 `Overlap` 검사를 통해 지면 스냅(Snap) 및 설치 가능 여부를 판별하고, **Dynamic Material**을 통해 시각적 피드백(초록/빨강)을 실시간으로 제공합니다.
 
@@ -81,7 +81,7 @@ void UBuildingSubsystem::UpdatePreview()
 
 ---
 
-### 🥚 팰 교배 시스템 (Breeding System)
+### 🥚 팰 교배 시스템
 * **역할:** 두 부모 팰(Pal)의 데이터를 기반으로 새로운 자식 팰을 생성합니다.
 * **핵심 기능:** 부모의 개체값(IV)과 특성(Trait)을 확률적으로 유전받으며, 부모의 몸 색상을 HSV 색공간에서 혼합하여 자식의 고유한 색상을 결정하는 알고리즘이 구현되어 있습니다.
 
@@ -124,7 +124,7 @@ APal* APal::Breed(UObject* WorldContextObject, APal* ParentA, APal* ParentB, FVe
 
 ---
 
-### 📊 팰 스탯 시스템 (Stats System)
+### 📊 팰 스탯 시스템
 * **역할:** 팰의 최종 능력치를 계산하고 관리합니다.
 
 * **핵심 기능:** RecalculateStats 함수를 통해 **기본 종족값 + 개체값(IV) + 특성 배율(Trait Multiplier)**이 복합적으로 적용된 최종 스탯을 산출합니다. 데이터 주도적(Data-Driven) 설계를 통해 다양한 특성을 유연하게 적용합니다.
@@ -162,7 +162,7 @@ void APal::RecalculateStats()
 
 ---
 
-### 🚀 플레이어 시스템 (Player Progression)
+### 🚀 플레이어 시스템
 * **역할:** 플레이어의 경험치, 레벨, 기술 포인트 등을 관리합니다.
 * **핵심 기능:** 경험치 획득 시 레벨업 루프를 처리하고, 레벨에 따른 곡선형 필요 경험치(BaseXP * Level^Exponent)를 계산하여 RPG적인 성장 곡선을 구현했습니다.
 
